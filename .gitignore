@@ -25,6 +25,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.mle-pr-final
+.env
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -164,3 +166,4 @@ cython_debug/
 old/
 .vscode/
 .DS_Store
+/data
