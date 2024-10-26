@@ -1,6 +1,6 @@
 # Load environment variables from .env file
 set -o allexport
-source /home/mle-user/mle_projects/mle-project-sprint-2-v001/.env
+source ../.env
 set +o allexport
 
 # Confirm values (optional debugging step)

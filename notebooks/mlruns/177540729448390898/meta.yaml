@@ -1,0 +1,6 @@
+artifact_location: file:///home/mle-user/mle_projects/mle-pr-final/notebooks/mlruns/177540729448390898
+creation_time: 1729957952052
+experiment_id: '177540729448390898'
+last_update_time: 1729957952052
+lifecycle_stage: active
+name: ALS_Model_Experiment
