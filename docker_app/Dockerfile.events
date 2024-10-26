@@ -1,0 +1,7 @@
+FROM anufriev2510/app_base:latest
+
+WORKDIR /app/events
+
+COPY app/services/events/events_service.py . 
+
+CMD ["uvicorn", "events_service:app", "--host", "0.0.0.0", "--port", "8020"]

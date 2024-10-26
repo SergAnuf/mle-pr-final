@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  my_base_image:
+    image: anufriev2510/app_base:latest
+    build:
+      context: ../
+      dockerfile: docker_app/Dockerfile.base  
+
+  recommendation:
+    build:
+      context: ../
+      dockerfile: docker_app/Dockerfile.recommendation
+    depends_on:
+      - my_base_image 
+    ports:
+      - "1300:1300" 
+    env_file:
+      - ../.env  
+    networks:
+      - mle_network
+  
+
+  events:
+    build:
+      context: ../
+      dockerfile: docker_app/Dockerfile.events
+    depends_on:
+      - my_base_image  
+    ports:
+      - "8020:8020" 
+    env_file:
+      - ../.env  
+    networks:
+      - mle_network
+ 
+
+  features:
+    build:
+      context: ../
+      dockerfile: docker_app/Dockerfile.features
+    depends_on:
+      - my_base_image
+    ports:
+      - "8010:8010"   
+    env_file:
+      - ../.env  
+    networks:
+      - mle_network
+
+
+networks:
+  mle_network:
+
+

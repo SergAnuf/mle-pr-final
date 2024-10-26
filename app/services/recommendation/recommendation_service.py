@@ -14,7 +14,8 @@ load_dotenv()
 features_store_url = "http://localhost:8010"
 events_store_url = "http://localhost:8020"
 
-PATH_S3_CATBOOST_MODEL = "recsys/recommendations/recommendations.parquet"
+# млфлоу сохранила предсказания онлайн и офлайн сюда 
+PATH_S3_ALS_MODEL = "recsys/recommendations/offline_4.parquet"
 PATH_S3_TOP_POPULAR = "recsys/recommendations/top_popular.parquet"
 
 class Recommendations:
@@ -44,7 +45,7 @@ class Recommendations:
                 raise ValueError(f"Загруженные рекомендации {type} пустые.")
 
             if type == "personal":
-                self._recs[type] = self._recs[type].set_index("user_id")
+                self._recs[type] = self._recs[type].set_index("user_id_enc")
                 
             logger.info(f"Рекомендации {type} успешно загруженны из S3")
 
@@ -52,17 +53,17 @@ class Recommendations:
             logger.error(f"Ошибка загрузки рекомендаций из S3: {e}")
             raise
 
-    def get(self, user_id: int, k: int=20):
+    def get(self, user_id_enc: int, k: int=20):
         """
         Возвращает список рекомендаций для пользователя
         """
         try:
-            recs = self._recs["personal"].loc[user_id]
-            recs = recs["item_id"].to_list()[:k]
+            recs = self._recs["personal"].loc[user_id_enc]
+            recs = recs["categoryid_enc"].to_list()[:k]
             self._stats["request_personal_count"] += 1
         except KeyError:
             recs = self._recs["default"]
-            recs = recs["item_id"].to_list()[:k]
+            recs = recs["categoryid_enc"].to_list()[:k]
             self._stats["request_default_count"] += 1
         except:
             logger.error("No recommendations found")
@@ -101,15 +102,15 @@ async def lifespan(app: FastAPI):
         type="personal",
         s3_client=s3_client,
         bucket_name=bucket_name,
-        s3_key=PATH_S3_CATBOOST_MODEL,
-        columns=["user_id", "item_id", "rank"]
+        s3_key=PATH_S3_ALS_MODEL,
+        columns=["user_id_enc", "categoryid_enc", "rank"]
     )
     rec_store.load(
         type="default",
         s3_client=s3_client,
         bucket_name=bucket_name,
         s3_key=PATH_S3_TOP_POPULAR,
-        columns=["item_id", "rank"]
+        columns=["categoryid_enc", "rank"]
     )
     
     yield
@@ -123,12 +124,12 @@ app = FastAPI(title="recommendations", lifespan=lifespan)
 
 
 @app.post("/recommendations_offline/")
-async def recommendations_offline(user_id: int, k: int = 20):
+async def recommendations_offline(user_id_enc: int, k: int = 20):
     """
-    Возвращает список рекомендаций длиной k для пользователя user_id
+    Возвращает список рекомендаций длиной k для пользователя user_id_enc
     """
 
-    recs = rec_store.get(user_id=user_id, k=k) 
+    recs = rec_store.get(user_id_enc=user_id_enc, k=k) 
 
     return {"recs": recs}
 
@@ -143,14 +144,14 @@ def dedup_ids(ids):
     return ids
 
 @app.post("/recommendations_online/")
-async def recommendations_online(user_id: int, k: int = 20):
+async def recommendations_online(user_id_enc: int, k: int = 20):
     """
-    Возвращает список онлайн-рекомендаций длиной k для пользователя user_id
+    Возвращает список онлайн-рекомендаций длиной k для пользователя user_id_enc
     """
 
     headers = {"Content-type": "application/json", "Accept": "text/plain"}
     # получаем список последних событий пользователя, возьмём три последних
-    params = {"user_id": user_id, "k": 3}
+    params = {"user_id_enc": user_id_enc, "k": 3}
     # ваш код здесь
     resp = requests.post(events_store_url + "/get", headers=headers, params=params)
     events_items = resp.json()["events"]
@@ -159,7 +160,7 @@ async def recommendations_online(user_id: int, k: int = 20):
     items = []
     scores = []
     for categoryid_enc in events_items:
-        # для каждого item_id получаем список похожих в item_similar_items
+        # для каждого categoryid_enc получаем список похожих в item_similar_items
         # ваш код здесь
         params = {"categoryid_enc": categoryid_enc,'k': k}
         resp = requests.post(features_store_url +"/similar_categories", headers=headers, params=params)
@@ -181,13 +182,13 @@ async def recommendations_online(user_id: int, k: int = 20):
 
 
 @app.post("/recommendations/")
-async def recommendations(user_id: int, k: int = 20):
+async def recommendations(user_id_enc: int, k: int = 20):
     """
-    Возвращает список рекомендаций длиной k для пользователя user_id
+    Возвращает список рекомендаций длиной k для пользователя user_id_enc
     """
 
-    recs_offline = await recommendations_offline(user_id, k)
-    recs_online = await recommendations_online(user_id, k)
+    recs_offline = await recommendations_offline(user_id_enc, k)
+    recs_online = await recommendations_online(user_id_enc, k)
 
     recs_offline = recs_offline["recs"]
     recs_online = recs_online["recs"]

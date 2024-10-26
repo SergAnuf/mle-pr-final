@@ -1,0 +1,9 @@
+FROM anufriev2510/app_base:latest
+
+WORKDIR /app/recommendation
+
+COPY app/services/recommendation/recommendation_service.py . 
+
+CMD ["uvicorn", "recommendation_service:app", "--host", "0.0.0.0", "--port", "1300"]
+
+

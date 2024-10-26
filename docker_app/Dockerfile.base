@@ -1,0 +1,18 @@
+# Dockerfile.base
+
+FROM python:3.10.12
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the requirements file from the config directory relative to the context
+COPY ../config/requirements.txt .  
+
+# Install the requirements
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Clean up pip cache to reduce image size
+RUN pip cache purge
+
+# Keep the container running
+CMD ["tail", "-f", "/dev/null"]

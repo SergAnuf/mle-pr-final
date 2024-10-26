@@ -1,0 +1,7 @@
+FROM anufriev2510/app_base:latest
+
+WORKDIR /app/features
+
+COPY app/services/features/features_service.py . 
+
+CMD ["uvicorn", "features_service:app", "--host", "0.0.0.0", "--port", "8010"]
