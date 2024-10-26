@@ -7,6 +7,8 @@ import os
 from dotenv import load_dotenv
 import boto3
 from io import BytesIO
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # Load environment variables
 load_dotenv()
