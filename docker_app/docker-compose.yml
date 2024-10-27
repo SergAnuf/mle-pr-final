@@ -51,3 +51,27 @@ services:
       - ../.env  
     networks:
       - my_custom_network
+
+  prometheus:
+    image: prom/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "${PROM_PORT_VM}:${PROM_PORT_DOCKER}"  # Add your environment variables for ports
+    volumes:
+      - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+    networks:
+      - my_custom_network
+
+  grafana:
+    image: grafana/grafana
+    env_file:
+      - ./.env
+    ports:
+      - "${GRAFANA_PORT_VM}:${GRAFANA_PORT_DOCKER}"  # Add your environment variables for ports
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS}
+    networks:
+      - my_custom_network
+
