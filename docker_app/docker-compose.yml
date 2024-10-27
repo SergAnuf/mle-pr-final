@@ -1,11 +1,17 @@
 version: '3.8'
 
+networks:
+  my_custom_network:
+    driver: bridge
+
 services:
   my_base_image:
     image: anufriev2510/app_base:latest
     build:
       context: ../
-      dockerfile: docker_app/Dockerfile.base  
+      dockerfile: docker_app/Dockerfile.base
+    networks:
+      - my_custom_network
 
   recommendation:
     build:
@@ -18,8 +24,7 @@ services:
     env_file:
       - ../.env  
     networks:
-      - mle_network
-  
+      - my_custom_network
 
   events:
     build:
@@ -28,12 +33,11 @@ services:
     depends_on:
       - my_base_image  
     ports:
-      - "8020:8020" 
+      - "5050:5050" 
     env_file:
       - ../.env  
     networks:
-      - mle_network
- 
+      - my_custom_network
 
   features:
     build:
@@ -46,10 +50,4 @@ services:
     env_file:
       - ../.env  
     networks:
-      - mle_network
-
-
-networks:
-  mle_network:
-
-
+      - my_custom_network

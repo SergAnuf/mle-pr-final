@@ -13,8 +13,8 @@ from urllib3.util.retry import Retry
 # Load environment variables
 load_dotenv()
 
-features_store_url = "http://localhost:8010"
-events_store_url = "http://localhost:8020"
+features_store_url = "http://features:8010"  # Change to the service name
+events_store_url = "http://events:5050"     
 
 # млфлоу сохранила предсказания онлайн и офлайн сюда 
 PATH_S3_ALS_MODEL = "recsys/recommendations/offline_4.parquet"

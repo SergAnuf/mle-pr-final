@@ -4,6 +4,8 @@ WORKDIR /app/recommendation
 
 COPY app/services/recommendation/recommendation_service.py . 
 
+EXPOSE 1300
+
 CMD ["uvicorn", "recommendation_service:app", "--host", "0.0.0.0", "--port", "1300"]
 
 
