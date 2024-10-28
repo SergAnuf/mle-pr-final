@@ -7,13 +7,12 @@ import os
 from dotenv import load_dotenv
 import boto3
 from io import BytesIO
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # Load environment variables
 load_dotenv()
 
-features_store_url = "http://features:8010"  # Change to the service name
+features_store_url = "http://features:8010"  
 events_store_url = "http://events:5050"     
 
 # млфлоу сохранила предсказания онлайн и офлайн сюда 
@@ -122,7 +121,8 @@ async def lifespan(app: FastAPI):
     
 # создаём приложение FastAPI
 app = FastAPI(title="recommendations", lifespan=lifespan)
-
+# instrumentator = Instrumentator()
+# instrumentator.instrument(app).expose(app)
 
 
 @app.post("/recommendations_offline/")

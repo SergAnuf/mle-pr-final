@@ -9,14 +9,14 @@ services:
     image: anufriev2510/app_base:latest
     build:
       context: ../
-      dockerfile: docker_app/Dockerfile.base
+      dockerfile: docker/Dockerfile.base
     networks:
       - my_custom_network
 
   recommendation:
     build:
       context: ../
-      dockerfile: docker_app/Dockerfile.recommendation
+      dockerfile: docker/Dockerfile.recommendation
     depends_on:
       - my_base_image 
     ports:
@@ -29,7 +29,7 @@ services:
   events:
     build:
       context: ../
-      dockerfile: docker_app/Dockerfile.events
+      dockerfile: docker/Dockerfile.events
     depends_on:
       - my_base_image  
     ports:
@@ -42,7 +42,7 @@ services:
   features:
     build:
       context: ../
-      dockerfile: docker_app/Dockerfile.features
+      dockerfile: docker/Dockerfile.features
     depends_on:
       - my_base_image
     ports:
@@ -59,14 +59,16 @@ services:
     ports:
       - "${PROM_PORT_VM}:${PROM_PORT_DOCKER}"  # Add your environment variables for ports
     volumes:
-      - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "../app/monitor/prometheus.yml:/etc/prometheus/prometheus.yml"
+    env_file:
+      - .env
     networks:
       - my_custom_network
 
   grafana:
     image: grafana/grafana
     env_file:
-      - ./.env
+      - .env
     ports:
       - "${GRAFANA_PORT_VM}:${GRAFANA_PORT_DOCKER}"  # Add your environment variables for ports
     environment:
