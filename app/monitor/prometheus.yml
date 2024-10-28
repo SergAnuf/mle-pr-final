@@ -7,14 +7,18 @@ global:
   
 
 scrape_configs:
-  # имя сборщика
+  # Main application metrics
   - job_name: 'scrapping-main-app'
-
-    # c какой страницы собиарть метрики?
     metrics_path: /metrics
     scheme: http
-    
     static_configs:
-    - targets:
-      # указывается адресс микросервиса
-      - recommendation_service:1300
+      - targets:
+          - recommendation:1300
+
+  # Events service metrics
+  - job_name: 'scrapping-events-service'
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets:
+          - events:5050
