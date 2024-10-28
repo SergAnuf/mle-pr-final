@@ -121,8 +121,8 @@ async def lifespan(app: FastAPI):
     
 # создаём приложение FastAPI
 app = FastAPI(title="recommendations", lifespan=lifespan)
-# instrumentator = Instrumentator()
-# instrumentator.instrument(app).expose(app)
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
 
 
 @app.post("/recommendations_offline/")
