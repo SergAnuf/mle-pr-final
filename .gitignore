@@ -169,3 +169,5 @@ old/
 .DS_Store
 /data
 /models
+
+/app/events_monitor.parquet

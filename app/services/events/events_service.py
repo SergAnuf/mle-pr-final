@@ -85,6 +85,7 @@ async def put(user_id_enc: int, categoryid_enc: int):
     response = requests.post(recommendations_url + "/recommendations_offline/", headers=headers, params=params)
     five_recommendations = response.json()["recs"]
     
+    # найдем качество рекомендаций 
     try:
         tp, fp, fn = events_store.put(user_id_enc, categoryid_enc, five_recommendations)
         # Increment Prometheus counters
