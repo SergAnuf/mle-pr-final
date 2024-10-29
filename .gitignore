@@ -171,3 +171,4 @@ old/
 /models
 
 /app/events_monitor.parquet
+/pipelines/logs

@@ -15,7 +15,7 @@ start_date = '2015-06-15'  # train start date
 end_date = '2015-09-01'    # train end date
 
 with DAG(
-    dag_id='retrain_model',
+    dag_id='model_retrain',
     schedule='@once',
     start_date=pendulum.datetime(2023, 1, 1, tz="UTC"),
     on_success_callback=send_telegram_success_message,

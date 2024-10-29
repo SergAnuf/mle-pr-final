@@ -1,5 +1,5 @@
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from sqlalchemy import MetaData, Table, Column, Integer, UniqueConstraint,BigInteger, Integer, TIMESTAMP,Text,Float
+from sqlalchemy import MetaData, Table, Column, Integer, UniqueConstraint, Integer, Text
 import pandas as pd
 import logging
 from sklearn.preprocessing import LabelEncoder
@@ -9,13 +9,14 @@ def create_events_train_table():
     events_table = Table(
         'events_train',
         metadata,
-        Column('itemid', Integer, primary_key=True),
+        Column('id', Integer, primary_key=True, autoincrement=True),
+        Column('itemid', Integer),
         Column('categoryid', Integer),
         Column('user_id_enc', Integer),
         Column('visitorid', Integer),
         Column('categoryid_enc', Integer),
-        Column('event', Float),
-        UniqueConstraint('user_id_enc', 'categoryid_enc', name='unique_user_category')
+        Column('event', Text),
+        UniqueConstraint('user_id_enc', 'categoryid_enc', name='user_category_unique')
     )
     
     hook = PostgresHook('destination_db')
@@ -80,7 +81,6 @@ def extract_item_categories(**kwargs):
         logging.warning("No data extracted.")
 
 
-
 def transform_events(**kwargs):
     ti = kwargs['ti']
 
@@ -99,20 +99,68 @@ def transform_events(**kwargs):
     # Merge event data with category data on 'itemid'
     events = events.merge(categories, how="left", on="itemid")
 
+    max_category_id = events["categoryid"].max()
+    events["categoryid"] = events["categoryid"].fillna(max_category_id + 1000).astype(int)
+
     # Encode 'visitorid' and 'categoryid' as integers
-    events['user_id_enc'] = user_encoder.fit_transform(events['visitorid'])
-    events['categoryid_enc'] = category_encoder.fit_transform(events['categoryid'])
+    events['user_id_enc'] = user_encoder.fit_transform(events['visitorid']).astype(int)
+    events['categoryid_enc'] = category_encoder.fit_transform(events['categoryid']).astype(int)
+
+    # Convert 'visitorid' and 'categoryid' to integers
+    events['visitorid'] = events['visitorid'].astype(int)
+    events['categoryid'] = events['categoryid'].astype(int)
+    events['itemid'] = events['itemid'].astype(int)
+
+    # Convert 'event' column to float
+    events['event'] = events['event'].astype(str)
 
     # Remove duplicate combinations of 'user_id_enc' and 'categoryid_enc'
     events = events.drop_duplicates(subset=["user_id_enc", "categoryid_enc"])
     
-    columns = ["user_id_enc", "categoryid_enc", "event", "visitorid", "categoryid","itemid"]
+    columns = ["user_id_enc", "categoryid_enc", "event", "visitorid", "categoryid", "itemid"]
     # Push the transformed data to XCom
     ti.xcom_push(key='transformed_events', value=events[columns])
     logging.info("Transformation complete and data pushed to XCom.")
 
 
 
+# def load_events_train_table(**kwargs):
+#     hook = PostgresHook('destination_db')
+#     ti = kwargs['ti']
+
+#     # Pull transformed data from XCom
+#     transformed_events = ti.xcom_pull(task_ids='transform_events', key='transformed_events')
+    
+#     # Check if transformed_events is a list and convert to DataFrame if necessary
+#     if isinstance(transformed_events, list):
+#         transformed_events = pd.DataFrame(transformed_events)
+
+#     # Logging the data pulled from XCom
+#     logging.info(f"Pulled data from XCom: {transformed_events.head() if isinstance(transformed_events, pd.DataFrame) else 'No data'}")
+    
+#     # Check if the DataFrame is not empty
+#     if transformed_events is not None and not transformed_events.empty:
+#         # Reset the index to prepare for insertion
+#         events_reset = transformed_events.reset_index(drop=True)
+
+#         # Prepare rows and columns for insertion
+#         rows = events_reset.values.tolist()
+#         data_columns = events_reset.columns.tolist()
+
+#         logging.info(f"Inserting {len(rows)} rows into events table.")
+#         try:
+#             hook.insert_rows(
+#                 table='events_train',
+#                 rows=rows,
+#                 target_fields=data_columns,
+#                 replace=True,
+#                 replace_index=['user_id_enc', 'categoryid_enc']  # Unique constraint fields
+#             )
+#             logging.info("Events data loaded successfully.")
+#         except Exception as e:
+#             logging.error(f"Failed to insert rows into events table: {e}")
+#     else:
+#         logging.error("No data available to load into events table.")
 
 
 def load_events_train_table(**kwargs):
@@ -135,23 +183,23 @@ def load_events_train_table(**kwargs):
         events_reset = transformed_events.reset_index(drop=True)
 
         # Prepare rows and columns for insertion
-        rows = events_reset.values.tolist()
-        data_columns = events_reset.columns.tolist()
+        rows = events_reset[['itemid', 'categoryid', 'user_id_enc', 'visitorid', 'categoryid_enc', 'event']].values.tolist()
+        data_columns = ['itemid', 'categoryid', 'user_id_enc', 'visitorid', 'categoryid_enc', 'event']
 
         logging.info(f"Inserting {len(rows)} rows into events table.")
         try:
             hook.insert_rows(
-                table='events',
+                table='events_train',
                 rows=rows,
                 target_fields=data_columns,
-                replace=True,
-                replace_index=['user_id_enc', 'categoryid_enc']  # Unique constraint fields
+                replace=False,  # Set to False since we may want to keep existing rows with unique constraints
             )
             logging.info("Events data loaded successfully.")
         except Exception as e:
             logging.error(f"Failed to insert rows into events table: {e}")
     else:
         logging.error("No data available to load into events table.")
+
 
 # def create_categories_table():
 #     metadata = MetaData()

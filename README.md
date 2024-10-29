@@ -1,16 +1,46 @@
-1. launch airflow 
+1. Launch app:
 
-cd mle-pr-final
-docker build -t my_airflow_image -f docker/airflow/Dockerfile .
-cd /home/mle-user/mle_projects/mle-pr-final/docker/airflow
-docker compose up airflow-init
-docker compose down --volumes --remove-orphans
+cd docker
+docker compose up --build
+
+2. Test monitor service:
+
+cd app
+python call_service.py
+
+cd monitor
+monitoring.md -> пояснение какие метрики в онлайн режиме следили за app
+monititoring_dashboard.json -> dashboard мониторинга в графане
 
 
+3. EDA / Modelling:
+
+cd notebooks
+A) EDA выводы -> находяться в ноутбуке
+B) Modelling:
+
+Модель однаступенчатая ALS - учитывает только взаимодействие пользователей с категорией товаров
+
+матрица пользователь - категории:
+1 - пользователь смотрел товар но не добавил в корзину
+K - integer param > 1, пользователь добавил в корзину
+
+далее обучение
+
+в предсказаниях ставим чтобы не убирать евенты смотрел толкько
+filter_already_liked_items=False
+
+в конце фильтр рекомендаций которые пользователь уже добавил (где K значение в юзер-айтем матрице)
+
+C) Track experiments Mlflow server:
+cd mlflow_server
+bash run_services.sh
 
 
-Factors	Regularization	Iterations	k
-50	0.05	              30	    5    This setup is balanced with your current parameters and might act as a good control case. Balanced Configuration (Baseline)
-30	0.1	20	                        5    Fewer Factors & Higher Reg. (Fewer latent factors and stronger regularization might reduce overfitting and make the model less complex)
-70	0.05	50	                    3    More Factors & Moderate Regularization
-50	0.01	50	                    7    More Iterations & Lower Regularization
+4. Retrain 
+
+cd pipelines 
+docker compose -up build
+
+DAG code : dags/retrain.py
+DAG name : "model_retrain"
