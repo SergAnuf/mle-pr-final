@@ -1,38 +1,38 @@
-stages:
-  get_data:
-    cmd: python src/data.py
-    deps:
-      - src/data.py
-    params:
-      - index_col
-      - test_size
-      - seed
-    outs:
-      - data/train_validate.csv
-      - data/test.csv
-  fit_model:
-    cmd: python src/fit.py
-    deps:
-      - data/train_dataset.csv
-      - src/fit.py
-    params:
-      - index_col
-      - target_col
-      - one_hot_drop
-      - catboost_params
-    outs:
-      - models/staging/fitted_model.pkl
-  evaluate_model:
-    cmd: python src/evaluate.py
-    deps:
-      - models/stagin/fitted_model.pkl
-      - src/evaluate.py
-      - data/train_validate.csv
-    params:
-      - index_col
-      - target_col
-      - n_splits
-      - n_jobs
-      - metrics
-    outs:
-      - cv_results/cv_res.json
+# stages:  needs change to airflow DAG -> start/end date + model config
+#   get_data:
+#     cmd: python src/data.py
+#     deps:
+#       - src/data.py
+#     params:
+#       - index_col
+#       - test_size
+#       - seed
+#     outs:
+#       - data/train_validate.csv
+#       - data/test.csv
+#   fit_model:
+#     cmd: python src/fit.py
+#     deps:
+#       - data/train_dataset.csv
+#       - src/fit.py
+#     params:
+#       - index_col
+#       - target_col
+#       - one_hot_drop
+#       - catboost_params
+#     outs:
+#       - models/staging/fitted_model.pkl
+#   evaluate_model:
+#     cmd: python src/evaluate.py
+#     deps:
+#       - models/stagin/fitted_model.pkl
+#       - src/evaluate.py
+#       - data/train_validate.csv
+#     params:
+#       - index_col
+#       - target_col
+#       - n_splits
+#       - n_jobs
+#       - metrics
+#     outs:
+#       - cv_results/cv_res.json 

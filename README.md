@@ -1,10 +1,13 @@
+S3_BUCKET_NAME=s3-student-mle-20240620-7af3548300
+DB_DESTINATION_NAME=playground_mle_20240620_7af3548300
+
+
 1. Launch app:
 
 cd docker
 
 
 docker compose up --build
-
 
 
 2. Test monitor service:
@@ -61,10 +64,12 @@ bash run_services.sh
 
 4. Retrain 
 
+
 cd pipelines 
 
 
 docker compose -up build
+
 
 DAG code : dags/retrain.py
 
