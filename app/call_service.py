@@ -13,7 +13,7 @@ test_addtocart = test_addtocart.sort_values("timestamp", ascending=False)
 test_addtocart = test_addtocart[["user_id_enc", "categoryid_enc"]]
 
 # Set parameters for sending requests
-total_duration = 1000  # Total duration for sending requests in seconds
+total_duration = 60*20  # Total duration for sending requests in seconds
 requests_count = len(test_addtocart)  # Total number of requests to send
 start_time = time.time()
 end_time = start_time + total_duration
