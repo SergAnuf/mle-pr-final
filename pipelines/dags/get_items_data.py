@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 from steps.extract2 import (
     extract_item_prices, 
     load_price, 
-   create_price_table
+   create_price_table,
+   extract_item_descriptions,
+   load_descriptions,
 )
 from steps.messages import send_telegram_success_message, send_telegram_failure_message
 import pendulum
@@ -12,7 +14,7 @@ import pendulum
 
 
 with DAG(
-    dag_id='get_data2',
+    dag_id='get_data_price',
     schedule='@once',
     start_date=pendulum.datetime(2023, 1, 1, tz="UTC"),
     on_success_callback=send_telegram_success_message,
@@ -37,6 +39,27 @@ with DAG(
         retry_delay=timedelta(seconds=20)
     )
 
+    create_descriptions = PythonOperator(           
+        task_id='create_descriptions_table',
+        python_callable=create_descriptions_table,
+    )
+
+    extract_descriptions = PythonOperator(
+        task_id='extract_item_descriptions',
+        python_callable=extract_item_descriptions,
+        retries=2, 
+        retry_delay=timedelta(seconds=20)
+    )
+
+    load_descriptions_task = PythonOperator(
+        task_id='load_descriptions',
+        python_callable=load_descriptions,
+        retries=2, 
+        retry_delay=timedelta(seconds=20)
+    )
+
+
     # Setting up dependencies
     create_prices >> extract_prices >> load_price_task
+    create_descriptions >> extract_descriptions >> load_descriptions_task
 

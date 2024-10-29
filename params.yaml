@@ -1,0 +1,14 @@
+
+
+
+
+# ALS MODEL paramas
+catboost_params:
+  iterations: 1000 
+  K: 7
+  REGULARIZATION: 6
+  l2_leaf_reg: 3.0
+  border_count: 254
+
+
+  eval_metric: 'RMSE'
