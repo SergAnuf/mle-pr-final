@@ -9,18 +9,21 @@ import numpy as np
 from dotenv import load_dotenv
 import os
 import boto3
+from io import BytesIO
+import pyarrow as pa
+import pyarrow.parquet as pq
+
 
 load_dotenv()
 
-def get_session_student():
-    session = boto3.session.Session()
-    return session.client(
-        service_name='s3',
-        endpoint_url='https://storage.yandexcloud.net',
-        aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID_STUDENT'),
-        aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY_STUDENT')
-    )
 
+s3_client = boto3.client(
+        's3',
+        aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+        endpoint_url='https://storage.yandexcloud.net'  # Use the appropriate endpoint for your S3 service
+    )
+    
 
 class ALSRecommender:
     def __init__(self, config, events_train):
@@ -192,6 +195,16 @@ def create_events_train_table():
 
 
 
+def save_df_to_s3(df, bucket_name, s3_key, s3_client):
+    """Save a DataFrame to S3 as a Parquet file."""
+    buffer = BytesIO()
+    table = pa.Table.from_pandas(df)
+    pq.write_table(table, buffer)
+    buffer.seek(0)  # Move to the beginning of the buffer
+    s3_client.upload_fileobj(buffer, bucket_name, s3_key)
+    logging.info(f"Uploaded {s3_key} to bucket {bucket_name}")
+
+
 def load_and_train_model(**kwargs):
     # Load Data
     hook = PostgresHook('destination_db')
@@ -225,11 +238,19 @@ def load_and_train_model(**kwargs):
     # Save Results
     filtered_recommendations = als_recommender.get_filtered_recommendations()
     similar_categories = als_recommender.get_similar_categories(chunk_size=1000, max_similar_items=10)
-    
-    # не могу сохранить 
-    filtered_recommendations.to_parquet("../models/staging/offline_dag.parquet")
-    similar_categories.to_parquet("../models/staging/online_dag.parquet")
 
+    bucket_name = os.environ.get('S3_BUCKET_NAME')
+    
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+        endpoint_url='https://storage.yandexcloud.net' 
+    )
+    
+    save_df_to_s3(filtered_recommendations, bucket_name, "models/staging/offline_dag.parquet", s3_client)
+    save_df_to_s3(similar_categories, bucket_name, "models/staging/online_dag.parquet", s3_client)
+    print("Uploaded recommendations and similar items to S3")
 
 
 

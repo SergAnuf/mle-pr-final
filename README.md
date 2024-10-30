@@ -74,4 +74,4 @@ docker compose -up build
 DAG code : dags/retrain.py
 
 
-DAG name : "model_retrain"
+DAG name : "model_update"
