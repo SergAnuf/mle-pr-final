@@ -8,6 +8,9 @@ from collections import defaultdict
 
 recommendations_url = "http://recommendation:1300"
 
+
+logger = logging.getLogger("uvicorn.error")
+
 class EventStore:
 
     def __init__(self, max_events_per_user=10):
@@ -32,6 +35,9 @@ class EventStore:
         # Increment the stored FN count for the user
         self.false_negatives[user_id_enc] += len(false_negatives)
 
+        logger.debug(f" Евенты TP: {len(true_positives)}, "
+                     f"FP: {len(false_positives)}, FN: {self.false_negatives[user_id_enc]}")
+        
         return len(true_positives), len(false_positives), self.false_negatives[user_id_enc]
 
     def get_false_negatives(self, user_id_enc):
@@ -45,6 +51,7 @@ class EventStore:
         Возвращает события для пользователя
         """
         user_events = self.events.get(user_id_enc, [])
+        logger.info(f"Взяли {k} events для user_id: {user_id_enc}")
 
         return user_events
 
@@ -77,6 +84,7 @@ async def put(user_id_enc: int, categoryid_enc: int):
     Сохраняет событие для user_id_enc, categoryid_enc
     """
     if not isinstance(user_id_enc, int) or not isinstance(categoryid_enc, int):
+        logger.warning("Не верные аргументы: user_id_enc and categoryid_enc должны быть integers")
         raise HTTPException(status_code=400, detail="Не верные аргументы: user_id_enc and categoryid_enc должны быть integers.")
     
     # Соберем текущие рекомендации пользователя
@@ -94,6 +102,7 @@ async def put(user_id_enc: int, categoryid_enc: int):
         FN_counter.inc(fn)
 
     except Exception as e:
+        logger.error(f"Ошибка при сохранении евента для юзера {user_id_enc}: {e}")
         raise HTTPException(status_code=500, detail="Ошибка при сохранении евента")
     
     return {"result": "ok"}
@@ -105,7 +114,12 @@ async def get(user_id_enc: int, k: int = 10):
     Возвращает список последних k событий для пользователя user_id_enc
     """
    
+    if not isinstance(user_id_enc, int) or not isinstance(k, int) or k <= 0:
+        logger.warning(f"не верные аргументы: user_id_enc and k должны быть положительными целыми числами.")
+        raise HTTPException(status_code=400, detail="не верные аргументы: user_id_enc and k должны быть положительными целыми числами.")
+    
     events = events_store.get(user_id_enc, k)
+    logger.info(f"Returned events for user {user_id_enc}")
     return {"events": events}
   
     

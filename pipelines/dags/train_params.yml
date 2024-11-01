@@ -1,0 +1,9 @@
+# training configuration
+start_date: '2015-06-15'  # train start date
+end_date: '2015-09-01'    # train end date
+
+model_config:             # model config
+  K: 7
+  FACTORS: 50
+  REGULARIZATION: 0.01
+  ITERATIONS: 70
