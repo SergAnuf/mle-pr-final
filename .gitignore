@@ -172,3 +172,6 @@ old/
 
 /app/events_monitor.parquet
 /pipelines/logs
+.env_mle_pr_final
+/mlflow_server/models
+/mlflow_server/final_recs
